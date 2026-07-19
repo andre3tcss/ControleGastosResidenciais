@@ -24,10 +24,21 @@ O projeto foi construído priorizando o baixo acoplamento e a alta coesão, sepa
 
 ## ⚙️ Como Executar o Projeto
 
-Certifique-se de ter o [Node.js](https://nodejs.org/) e o [.NET 8 SDK](https://dotnet.microsoft.com/download) instalados na sua máquina.
+Certifique-se de ter o [Node.js](https://nodejs.org) e o [.NET 8 SDK](https://microsoft.com) instalados na sua máquina.
 
 ### 1. Rodando a API (Back-end)
 Abra um terminal, navegue até a pasta da API e execute a aplicação:
 ```bash
 cd ControleGastos.Api
 dotnet run
+```
+A API será iniciada e o banco de dados `ControleGastos.db` será gerado automaticamente. O Swagger estará disponível na rota `/swagger`.
+
+### 2. Rodando a Interface (Front-end)
+Abra um segundo terminal, navegue até a pasta Web, instale as dependências e inicie o Vite:
+```bash
+cd ControleGastos.Web
+npm install
+npm run dev
+```
+O Front-end estará disponível no navegador, geralmente no endereço `http://localhost:5173`.
