@@ -3,20 +3,24 @@ import { api } from '../services/api';
 import type { Transacao, Pessoa } from '../types';
 
 export default function Transacoes() {
+    // 1. GERENCIAMENTO DE ESTADO LOCAL
+    // Armazena as coleções sincronizadas da API e os estados de controle do formulário
     const [listaTransacoes, setListaTransacoes] = useState<Transacao[]>([]);
     const [listaPessoas, setListaPessoas] = useState<Pessoa[]>([]);
 
-    // Estados do formulário
     const [descricao, setDescricao] = useState('');
     const [valor, setValor] = useState('');
-    const [tipo, setTipo] = useState('0'); // 0 = Despesa por padrão
+    const [tipo, setTipo] = useState('0'); // Define 'Despesa' como estado padrão (Enum indexado em 0)
     const [pessoaId, setPessoaId] = useState('');
 
+    // 2. CICLO DE VIDA DO COMPONENTE
+    // Dispara a carga de dados inicial assim que o componente é montado na interface
     useEffect(() => {
         carregarDados();
     }, []);
 
-    // Carrega transações e pessoas de forma paralela
+    // 3. INTEGRAÇÃO COM A API E REGRAS DE NEGÓCIO
+    // Executa requisições assíncronas concorrentes para otimizar o tempo de carregamento da interface
     async function carregarDados() {
         try {
             const resTransacoes = await api.get('/Transacoes');
@@ -31,6 +35,7 @@ export default function Transacoes() {
     async function cadastrarTransacao(evento: FormEvent) {
         evento.preventDefault();
 
+        // Validação de pré-condição no cliente antes do envio da requisição
         if (!pessoaId) {
             alert("Por favor, selecione uma pessoa.");
             return;
@@ -40,16 +45,17 @@ export default function Transacoes() {
             await api.post('/Transacoes', {
                 descricao: descricao,
                 valor: Number(valor),
-                tipo: Number(tipo),
+                tipo: Number(tipo), // Converte o valor do input para o formato do Enum esperado pela API
                 pessoaId: pessoaId
             });
 
-            // Limpa o formulário e recarrega a lista
+            // Restaura o estado inicial do formulário e revalida a listagem
             setDescricao('');
             setValor('');
             carregarDados();
 
         } catch (error: any) {
+            // Intercepta a validação de domínio (HTTP 400) da API e exibe a notificação ao usuário
             if (error.response && error.response.status === 400) {
                 alert(error.response.data.erro);
             } else {
@@ -58,10 +64,12 @@ export default function Transacoes() {
         }
     }
 
+    // 4. INTERFACE DO USUÁRIO (JSX)
     return (
         <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
             <h2>Lançar Transações</h2>
 
+            {/* Formulário de Captura e Registro de Transações Financeiras */}
             <form onSubmit={cadastrarTransacao} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
                 <input
                     type="text"
@@ -87,7 +95,7 @@ export default function Transacoes() {
 
                 <select value={pessoaId} onChange={(e) => setPessoaId(e.target.value)} required>
                     <option value="">Selecione o Morador</option>
-                    {/* Renderiza um <option> para cada pessoa que veio do banco */}
+                    {/* Popula dinamicamente as opções com base na coleção de entidades de apoio */}
                     {listaPessoas.map(p => (
                         <option key={p.id} value={p.id}>{p.nome}</option>
                     ))}
@@ -96,6 +104,7 @@ export default function Transacoes() {
                 <button type="submit">Lançar</button>
             </form>
 
+            {/* Apresentação de Dados Consolidados */}
             <ul style={{ listStyle: 'none', padding: 0 }}>
                 {listaTransacoes.map((t) => (
                     <li key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #ccc' }}>

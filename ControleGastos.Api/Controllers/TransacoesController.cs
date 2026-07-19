@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ControleGastos.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")] // Rota: /api/transacoes
+[Route("api/[controller]")]
 public class TransacoesController : ControllerBase
 {
     private readonly ITransacaoService _transacaoService;
@@ -15,6 +15,11 @@ public class TransacoesController : ControllerBase
         _transacaoService = transacaoService;
     }
 
+    /// <summary>
+    /// Registra um novo lançamento financeiro, validando as restrições de domínio associadas ao perfil do morador.
+    /// </summary>
+    /// <param name="dto">Payload com as informações da transação (descrição, valor, tipo e vínculo com a pessoa).</param>
+    /// <returns>A transação persistida ou uma falha de validação de domínio.</returns>
     [HttpPost]
     public async Task<IActionResult> Cadastrar([FromBody] TransacaoCreateDTO dto)
     {
@@ -25,16 +30,20 @@ public class TransacoesController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            // Se a regra de idade for violada, retorna HTTP 400 (Bad Request) com a mensagem
+            // Intercepta violações das regras de negócio (ex: restrição de idade) e retorna status HTTP 400
             return BadRequest(new { erro = ex.Message });
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
-            // Se a pessoa não existir, também retorna 400.
+            // Trata falhas de integridade referencial quando a entidade associada não é localizada na base
             return BadRequest(new { erro = ex.Message });
         }
     }
 
+    /// <summary>
+    /// Recupera o histórico completo de transações financeiras registradas na base de dados.
+    /// </summary>
+    /// <returns>Coleção de DTOs representando receitas e despesas.</returns>
     [HttpGet]
     public async Task<IActionResult> ListarTodas()
     {

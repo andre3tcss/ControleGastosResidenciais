@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ControleGastos.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")] // Rota: /api/relatorios
+[Route("api/[controller]")]
 public class RelatoriosController : ControllerBase
 {
     private readonly IRelatorioService _relatorioService;
@@ -14,7 +14,11 @@ public class RelatoriosController : ControllerBase
         _relatorioService = relatorioService;
     }
 
-    [HttpGet("totais")] // Rota final: /api/relatorios/totais
+    /// <summary>
+    /// Consolida os dados financeiros do sistema, gerando o balanço individualizado e os acumulados globais.
+    /// </summary>
+    /// <returns>Payload estruturado com receitas, despesas e saldo líquido de cada indivíduo e do balanço geral.</returns>
+    [HttpGet("totais")]
     public async Task<IActionResult> ObterTotais()
     {
         var relatorio = await _relatorioService.ObterTotaisGeraisAsync();

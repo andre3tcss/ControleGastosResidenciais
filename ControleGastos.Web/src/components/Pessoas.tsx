@@ -1,46 +1,44 @@
-// Arquivo: src/components/Pessoas.tsx
 import { useState, useEffect, FormEvent } from 'react';
 import { api } from '../services/api';
 import type { Pessoa } from '../types';
 
 export default function Pessoas() {
-    // 1. ESTADOS (A "Memória" do Componente)
-    // listaPessoas guarda o array de pessoas vindas da API. setListaPessoas é a função para alterá-la.
+    // 1. GERENCIAMENTO DE ESTADO LOCAL
+    // Mantém o estado sincronizado com a base de dados de pessoas e os inputs do formulário
     const [listaPessoas, setListaPessoas] = useState<Pessoa[]>([]);
-
-    // Estados para controlar o formulário
     const [nome, setNome] = useState('');
     const [idade, setIdade] = useState('');
 
-    // 2. EFEITOS COLATERAIS (useEffect)
-    // O useEffect roda automaticamente quando a tela abre pela primeira vez (devido ao array vazio [] no final).
+    // 2. CICLO DE VIDA DO COMPONENTE
+    // Inicializa a carga de dados no momento da montagem do componente na árvore de renderização
     useEffect(() => {
         carregarPessoas();
     }, []);
 
-    // 3. FUNÇÕES DE COMUNICAÇÃO COM A API
+    // 3. INTEGRAÇÃO COM A API E SERVIÇOS externo
     async function carregarPessoas() {
         try {
             const resposta = await api.get('/Pessoas');
-            setListaPessoas(resposta.data); // Atualiza o estado. O React redesenha a tela sozinho!
+            setListaPessoas(resposta.data);
         } catch (error) {
             console.error("Erro ao buscar pessoas", error);
         }
     }
 
     async function cadastrarPessoa(evento: FormEvent) {
-        evento.preventDefault(); // Impede a página de recarregar (comportamento padrão do HTML)
+        evento.preventDefault(); // Intercepta o comportamento nativo do formulário para processamento assíncrono
 
         try {
             await api.post('/Pessoas', {
                 nome: nome,
-                idade: Number(idade) // Converte a string do input para número
+                idade: Number(idade) // Tipagem explícita exigida pelo contrato do endpoint
             });
 
-            // Limpa os campos do formulário
+            // Restaura o estado inicial dos campos após a persistência bem-sucedida
             setNome('');
             setIdade('');
-            // Recarrega a lista do banco de dados
+
+            // Atualiza a listagem para garantir a consistência dos dados em tela
             carregarPessoas();
         } catch (error) {
             alert("Erro ao cadastrar pessoa.");
@@ -50,18 +48,18 @@ export default function Pessoas() {
     async function deletarPessoa(id: string) {
         try {
             await api.delete(`/Pessoas/${id}`);
-            carregarPessoas(); // Recarrega a lista após deletar
+            carregarPessoas(); // Sincroniza o estado local após a exclusão no banco de dados
         } catch (error) {
             alert("Erro ao deletar pessoa.");
         }
     }
 
-    // 4. O VISUAL (JSX)
+    // 4. INTERFACE DO USUÁRIO (JSX)
     return (
         <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
             <h2>Gerenciar Pessoas</h2>
 
-            {/* Formulário */}
+            {/* Formulário de Captura de Dados */}
             <form onSubmit={cadastrarPessoa} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                 <input
                     type="text"
@@ -80,9 +78,8 @@ export default function Pessoas() {
                 <button type="submit">Cadastrar</button>
             </form>
 
-            {/* Listagem */}
+            {/* Renderização Dinâmica da Coleção de Dados */}
             <ul style={{ listStyle: 'none', padding: 0 }}>
-                {/* O .map() percorre o array e devolve um pedaço de HTML para cada item */}
                 {listaPessoas.map((pessoa) => (
                     <li key={pessoa.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #ccc' }}>
                         <span>{pessoa.nome} - {pessoa.idade} anos</span>

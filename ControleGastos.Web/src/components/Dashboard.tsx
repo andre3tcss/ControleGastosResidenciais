@@ -1,4 +1,3 @@
-// Arquivo: src/components/Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import type { RelatorioGeral } from '../types';

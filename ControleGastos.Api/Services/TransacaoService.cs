@@ -5,34 +5,39 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ControleGastos.Api.Services;
 
+/// <summary>
+/// Orquestrador de domínio responsável pelas regras de negócio, validações de integridade e persistência de lançamentos financeiros.
+/// </summary>
 public class TransacaoService : ITransacaoService
 {
     private readonly AppDbContext _context;
 
-    public TransacaoService (AppDbContext context)
+    public TransacaoService(AppDbContext context)
     {
         _context = context;
     }
 
     /// <summary>
-    /// Cadastra uma transação aplicando as validações de negócio.
-    /// Lança exceção caso as regras sejam violadas.
+    /// Valida e processa as regras de negócio vigentes para a homologação e persistência de uma movimentação financeira.
     /// </summary>
-
+    /// <param name="dto">Payload contendo as especificações do lançamento financeiro.</param>
+    /// <returns>A entidade de transação devidamente indexada e salva na base de dados.</returns>
+    /// <exception cref="InvalidOperationException">Lançada caso o vínculo referencial com o morador seja inválido.</exception>
+    /// <exception cref="ArgumentException">Lançada caso haja violação nas restrições de conformidade de perfil por idade.</exception>
     public async Task<Transacao> CadastrarAsync(TransacaoCreateDTO dto)
     {
-        // Regra 1: Verificar se a pessoa existe no banco de dados (RF01 associado à Transação)
+        // Garante a integridade referencial validando a existência prévia da entidade associada na base de dados
         var pessoa = await _context.Pessoas.FindAsync(dto.PessoaId);
 
         if (pessoa == null)
         {
-            throw new Exception("Pessoa não encontrada no sistema.");
+            throw new InvalidOperationException("Operação inválida: O identificador de morador fornecido não corresponde a um registro ativo.");
         }
 
-        // Regra 2: Menores de 18 anos só podem registrar despesas
+        // Regra de governança de domínio: Restringe o fluxo de crédito (Receitas) baseado na classificação legal de maioridade do perfil
         if (pessoa.Idade < 18 && dto.Tipo == TipoTransacao.Receita)
         {
-            throw new ArgumentException("Menores de 18 anos não podem registrar receitas, apenas despesas.");
+            throw new ArgumentException("Violação de conformidade: Contas associadas a menores de 18 anos possuem restrição para lançamentos de receita.");
         }
 
         var transacao = new Transacao
@@ -49,10 +54,13 @@ public class TransacaoService : ITransacaoService
         return transacao;
     }
 
+    /// <summary>
+    /// Recupera o histórico consolidado de transações, resolvendo as dependências de perfil associadas.
+    /// </summary>
+    /// <returns>Coleção iterável de transações financeiras com seus respectivos vínculos de domínio.</returns>
     public async Task<IEnumerable<Transacao>> ListarTodasAsync()
     {
-        // Include carrega os dados da Pessoa associada (Eager Loading), 
-        // equivalente ao JOIN no SQL.
+        // Resolve a associação estrutural com a entidade de apoio para exibição completa dos dados na interface
         return await _context.Transacoes.Include(t => t.Pessoa).ToListAsync();
     }
 }

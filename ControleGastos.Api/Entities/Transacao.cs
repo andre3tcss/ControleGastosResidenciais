@@ -1,5 +1,8 @@
 namespace ControleGastos.Api.Entities;
 
+/// <summary>
+/// Representa a entidade de domínio de movimentações e lançamentos financeiros do sistema.
+/// </summary>
 public class Transacao
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -7,9 +10,13 @@ public class Transacao
     public decimal Valor { get; set; }
     public TipoTransacao Tipo { get; set; }
 
-    // Chave Estrangeira
+    /// <summary>
+    /// Identificador de integridade referencial que estabelece o vínculo com a entidade Pessoa.
+    /// </summary>
     public Guid PessoaId { get; set; }
 
-    // Propriedade de Navegação
+    /// <summary>
+    /// Propriedade estrutural para carregamento e resolução do relacionamento de dependência via ORM.
+    /// </summary>
     public Pessoa? Pessoa { get; set; }
 }
